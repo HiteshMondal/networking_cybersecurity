@@ -213,50 +213,256 @@ encryption_basics() {
                Examples: SHA-256, SHA-3, BLAKE3.
 INFO
 
-    section "AES-256-GCM — Symmetric Encryption Demo"
-    if cmd_exists openssl; then
-        local plaintext="This is a SECRET message — CIA Triad in action."
-        local pass="s3cret_demo_passphrase"
-
-        echo -e "  ${INFO}Plaintext:${NC}  ${plaintext}"
-        echo
-
-        local ciphertext
-        ciphertext=$(echo "$plaintext" | \
-            openssl enc -aes-256-gcm -pbkdf2 -iter 100000 -base64 -pass "pass:${pass}" 2>/dev/null)
-        echo -e "  ${LABEL}Ciphertext (Base64):${NC}"
-        echo -e "  ${MUTED}${ciphertext}${NC}"
-        echo
-
-        local decrypted
-        decrypted=$(echo "$ciphertext" | \
-            openssl enc -aes-256-gcm -pbkdf2 -iter 100000 -d -base64 -pass "pass:${pass}" 2>/dev/null)
-
-        if [[ "$decrypted" == "$plaintext" ]]; then
-            status_line ok "Decryption successful: ${decrypted}"
-        else
-            echo -e "  ${MUTED}AES-GCM demo not supported on this OpenSSL version — trying CBC:${NC}"
-            ciphertext=$(echo "$plaintext" | \
-                openssl enc -aes-256-cbc -pbkdf2 -iter 100000 -base64 -pass "pass:${pass}" 2>/dev/null)
-            echo -e "  ${MUTED}${ciphertext}${NC}"
-            decrypted=$(echo "$ciphertext" | \
-                openssl enc -aes-256-cbc -pbkdf2 -iter 100000 -d -base64 -pass "pass:${pass}" 2>/dev/null)
-            [[ "$decrypted" == "$plaintext" ]] \
-                && status_line ok "AES-256-CBC decrypt: ${decrypted}" \
-                || status_line fail "Decryption failed"
-        fi
-    else
-        status_line neutral "openssl not available"
+    if ! cmd_exists openssl; then
+        status_line neutral "openssl not available — cannot run encryption demo"
+        return 0
     fi
 
-    section "OpenSSL Version & Supported Ciphers"
-    if cmd_exists openssl; then
-        kv "OpenSSL version" "$(openssl version 2>/dev/null)"
+    # AES-256-CBC chosen for broad OpenSSL CLI compatibility.
+    # AEAD modes like GCM are inconsistently supported with `openssl enc`.
+    local cipher="aes-256-cbc"
+
+    section "OpenSSL Version & Cipher"
+    kv "OpenSSL version" "$(openssl version 2>/dev/null)"
+    kv "Cipher in use"   "${cipher^^}"
+    echo
+    echo -e "  ${MUTED}AES cipher variants available:${NC}"
+    openssl enc -ciphers 2>/dev/null \
+        | tr ' ' '\n' | grep -i "^-aes" | sort \
+        | pr -3 -t 2>/dev/null | head -8 | sed 's/^/  /'
+
+    # INTERACTIVE LOOP
+    local session_key=""   # persists passphrase within the session
+
+    while true; do
         echo
-        echo -e "  ${MUTED}AES cipher variants available:${NC}"
-        openssl enc -ciphers 2>/dev/null | tr ' ' '\n' | grep -i "aes" | sort | \
-            column 2>/dev/null | head -10 | sed 's/^/  /'
-    fi
+        print_divider "Encryption / Decryption Lab" thin
+
+        echo -e "  ${AMBER}What would you like to do?${NC}"
+        echo -e "  ${GREEN}  1.${NC}  Encrypt — type a message"
+        echo -e "  ${GREEN}  2.${NC}  Encrypt — from a file"
+        echo -e "  ${GREEN}  3.${NC}  Decrypt — paste ciphertext"
+        echo -e "  ${GREEN}  4.${NC}  Decrypt — from a file"
+        echo -e "  ${GREEN}  5.${NC}  Change passphrase  ${MUTED}(current: $(
+            [[ -n "$session_key" ]] && echo "set" || echo "not set"
+        ))${NC}"
+        echo -e "  ${RED}  0.${NC}  Back"
+        echo
+        read -rp "$(echo -e "  ${PROMPT}[?] Choose: ${NC}")" enc_choice
+        echo
+
+        [[ "$enc_choice" == "0" ]] && break
+
+        #  Passphrase handling 
+        _enc_get_passphrase() {
+            local mode="$1"
+
+            if [[ -n "$session_key" ]]; then
+                echo -e "  ${MUTED}Using saved session passphrase. Leave blank to keep it, or enter new:${NC}" >&2
+            else
+                echo -e "  ${MUTED}Enter passphrase for ${mode}:${NC}" >&2
+            fi
+
+            local pass=""
+
+            echo -ne "  ${PROMPT}[#] Passphrase: ${NC}" >&2
+            read -rs pass
+            echo >&2
+
+            if [[ -z "$pass" && -n "$session_key" ]]; then
+                pass="$session_key"
+            elif [[ -z "$pass" ]]; then
+                log_warning "Passphrase cannot be empty." >&2
+                return 1
+            fi
+
+            if [[ "$mode" == "encrypt" ]]; then
+                local confirm=""
+
+                echo -ne "  ${PROMPT}[#] Confirm passphrase: ${NC}" >&2
+                read -rs confirm
+                echo >&2
+
+                if [[ "$pass" != "$confirm" ]]; then
+                    log_error "Passphrases do not match." >&2
+                    return 1
+                fi
+            fi
+
+            session_key="$pass"
+        }
+
+        # Encrypt helper
+        _enc_do_encrypt() {
+            local input_data="$1"
+            local pass="$2"
+
+            local ct
+
+            ct=$(
+                openssl enc -"${cipher}" \
+                    -pbkdf2 \
+                    -iter 100000 \
+                    -salt \
+                    -base64 \
+                    -pass "pass:${pass}" \
+                    <<< "$input_data" 2>/dev/null
+            )
+
+            if [[ $? -ne 0 || -z "$ct" ]]; then
+                log_error "Encryption failed."
+                return 1
+            fi
+
+            echo
+            echo -e "  ${LABEL}Ciphertext (Base64):${NC}"
+            echo
+            printf "  %b%s%b\n\n" "$GOLD" "$ct" "$NC"
+        }
+
+        # Decrypt helper
+        _enc_do_decrypt() {
+            local ct_data="$1"
+            local pass="$2"
+
+            local pt
+
+            pt=$(
+                openssl enc -"${cipher}" \
+                    -pbkdf2 \
+                    -iter 100000 \
+                    -d \
+                    -base64 \
+                    -pass "pass:${pass}" \
+                    <<< "$ct_data" 2>/dev/null
+            )
+
+            if [[ $? -ne 0 ]]; then
+                log_error "Decryption failed — wrong passphrase or corrupted data."
+                return 1
+            fi
+
+            echo
+            echo -e "  ${LABEL}Decrypted plaintext:${NC}"
+            echo
+            printf "  %b%s%b\n\n" "$MINT" "$pt" "$NC"
+        }
+
+        #  Branch on user choice 
+        case "$enc_choice" in
+            1)
+                echo -e "  ${INFO}Type your message:${NC}"
+                echo
+
+                local typed_msg=""
+                read -r typed_msg
+
+                if [[ -z "$typed_msg" ]]; then
+                    log_warning "No input provided."
+                    continue
+                fi
+
+                local pass=""
+                _enc_get_passphrase "encrypt" || { sleep 1; continue; }
+                pass="$session_key"
+
+                _enc_do_encrypt "$typed_msg" "$pass"
+                ;;
+
+            2)
+                read -rp "$(echo -e "  ${PROMPT}[?] File path to encrypt: ${NC}")" file_path
+                file_path="${file_path// /}"
+
+                if [[ ! -f "$file_path" ]]; then
+                    log_error "File not found: ${file_path}"; continue
+                fi
+                if [[ ! -r "$file_path" ]]; then
+                    log_error "File not readable: ${file_path}"; continue
+                fi
+
+                local file_size
+                file_size=$(wc -c < "$file_path" 2>/dev/null)
+                if (( file_size > 10485760 )); then
+                    log_warning "File is larger than 10 MB. Proceed? [yes/no]"
+                    read -r big_ok
+                    [[ "$big_ok" != "yes" ]] && continue
+                fi
+
+                local file_content
+                file_content=$(cat "$file_path")
+                if [[ -z "$file_content" ]]; then
+                    log_warning "File is empty."; continue
+                fi
+
+                kv "File" "$file_path"
+                kv "Size" "${file_size} bytes"
+                echo
+
+                local pass=""
+                _enc_get_passphrase "encrypt" || { sleep 1; continue; }
+                pass="$session_key"
+                _enc_do_encrypt "$file_content" "$pass"
+                ;;
+
+            3)
+                echo -e "  ${INFO}Paste Base64 ciphertext:${NC}"
+                echo
+
+                local pasted_ct=""
+                IFS= read -r pasted_ct
+                pasted_ct=$(printf '%s' "$pasted_ct" | tr -d '[:space:]')
+
+                if [[ -z "$pasted_ct" ]]; then
+                    log_warning "No input provided."; continue
+                fi
+
+                local pass=""
+                _enc_get_passphrase "decrypt" || { sleep 1; continue; }
+                pass="$session_key"
+                _enc_do_decrypt "$pasted_ct" "$pass"
+                ;;
+
+            4)
+                read -rp "$(echo -e "  ${PROMPT}[?] File path containing ciphertext: ${NC}")" file_path
+                file_path="${file_path// /}"
+
+                if [[ ! -f "$file_path" ]]; then
+                    log_error "File not found: ${file_path}"; continue
+                fi
+                if [[ ! -r "$file_path" ]]; then
+                    log_error "File not readable: ${file_path}"; continue
+                fi
+
+                local ct_from_file
+                ct_from_file=$(cat "$file_path" | tr -d '[:space:]')
+                if [[ -z "$ct_from_file" ]]; then
+                    log_warning "File is empty."; continue
+                fi
+
+                kv "File" "$file_path"
+                echo
+
+                local pass=""
+                _enc_get_passphrase "decrypt" || { sleep 1; continue; }
+                pass="$session_key"
+                _enc_do_decrypt "$ct_from_file" "$pass"
+                ;;
+
+            5)
+                session_key=""
+                _enc_get_passphrase "encrypt" || { sleep 1; continue; }
+                status_line ok "Session passphrase updated."
+                ;;
+
+            *)
+                log_error "Invalid option."
+                sleep 1
+                ;;
+        esac
+
+        echo
+        read -rp "$(echo -e "  ${MUTED}Press Enter to continue...${NC}  ")"
+    done
 }
 
 # HASHING vs ENCRYPTING
@@ -323,7 +529,7 @@ symmetric_asymmetric() {
 
     section "Comparison"
     printf "\n  ${BOLD}%-35s %-35s${NC}\n" "Symmetric" "Asymmetric"
-    printf "  ${DARK_GRAY}%-35s %-35s${NC}\n" "$(printf '─%.0s' {1..33})" "$(printf '─%.0s' {1..33})"
+    printf "  ${DARK_GRAY}%-35s %-35s${NC}\n" "$(printf '%.0s' {1..33})" "$(printf '%.0s' {1..33})"
     while IFS='|' read -r sym asym; do
         printf "  ${GREEN}%-35s${NC} ${CYAN}%-35s${NC}\n" "$sym" "$asym"
     done << 'TABLE'
@@ -400,20 +606,20 @@ tls_handshake() {
     section "TLS 1.3 Handshake Flow (RFC 8446)"
     cat << 'INFO'
   Client                              Server
-  ─────────────────────────────────────────────────────────
-    ClientHello                ──►
+  
+    ClientHello                ►
       (supported ciphers,
        key_share, extensions)
-                               ◄──  ServerHello
+                               ◄  ServerHello
                                       (chosen cipher,
                                        key_share)
-                               ◄──  {EncryptedExtensions}
-                               ◄──  {Certificate}
-                               ◄──  {CertificateVerify}
-                               ◄──  {Finished}
-    {Finished}                 ──►
-    {Application Data}         ──►  {Application Data}
-  ─────────────────────────────────────────────────────────
+                               ◄  {EncryptedExtensions}
+                               ◄  {Certificate}
+                               ◄  {CertificateVerify}
+                               ◄  {Finished}
+    {Finished}                 ►
+    {Application Data}         ►  {Application Data}
+  
   Key: {} = encrypted with derived keys
 
   TLS 1.3 improvements over TLS 1.2:
@@ -557,7 +763,7 @@ hashing_demo() {
         echo
         printf "  ${BOLD}%-12s %-10s %s${NC}\n" "Algorithm" "Bits" "Digest"
         printf "  ${DARK_GRAY}%-12s %-10s %s${NC}\n" \
-            "───────────" "─────────" "──────────────────────────────────────────────────"
+            "-----------" "---------" "--------------------------------------------------"
         for algo in md5 sha1 sha224 sha256 sha384 sha512; do
             local d
             d=$(echo -n "$test_input" | openssl dgst "-${algo}" 2>/dev/null | awk '{print $2}')
@@ -731,7 +937,7 @@ permission_audit() {
     echo
     printf "  ${BOLD}%-32s %-8s %-8s %s${NC}\n" "File" "Perms" "Owner" "Status"
     printf "  ${DARK_GRAY}%-32s %-8s %-8s %s${NC}\n" \
-        "$(printf '─%.0s' {1..31})" "───────" "───────" "──────"
+        "$(printf '-%.0s' {1..31})" "-------" "-------" "------"
 
     local -A expected_perms=(
         ["/etc/passwd"]="644"
