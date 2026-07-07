@@ -22,15 +22,15 @@ export PROJECT_ROOT="$(cd "$(dirname "$0")" && pwd)"
 source "$PROJECT_ROOT/config/settings.conf"
 source "$PROJECT_ROOT/lib/colors.sh"
 source "$PROJECT_ROOT/lib/functions.sh"
+source "$PROJECT_ROOT/tools/run_tool.sh"
 source "$PROJECT_ROOT/modules/run_modules.sh"
 source "$PROJECT_ROOT/network_lab/network_lab.sh"
 source "$PROJECT_ROOT/dashboard/start_dashboard.sh"
-source "$PROJECT_ROOT/tools/run_tool.sh"
 
 # Directory setup
 MODULES_DIR="$PROJECT_ROOT/modules"
-LOG_DIR="$PROJECT_ROOT/logs"
 OUTPUT_DIR="$PROJECT_ROOT/output"
+LOG_DIR="$PROJECT_ROOT/logs"
 DASHBOARD_DIR="$PROJECT_ROOT/dashboard"
 
 mkdir -p "$LOG_DIR" "$OUTPUT_DIR"
@@ -124,7 +124,6 @@ show_system_info() {
     kv "  Log files" "$(find "$LOG_DIR" -type f 2>/dev/null -printf '.' | wc -c)"
     kv "  Output files" "$(find "$OUTPUT_DIR" -type f 2>/dev/null | wc -l)"
     kv "  Modules" "$(find "$MODULES_DIR" -name '*.sh' ! -name 'run_modules.sh' | wc -l)"
-
     echo
 
     if [[ -f "$PID_FILE" ]]; then
