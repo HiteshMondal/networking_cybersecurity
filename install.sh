@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# install.sh
+# ./install.sh
 # Networking & Cybersecurity Toolkit — Dependency Installer
 # Supports: Debian/Ubuntu, Arch/Manjaro, RHEL/Fedora/CentOS, openSUSE, Alpine, Void
 
@@ -17,8 +17,8 @@ else
     GREEN='' AMBER='' RED='' CYAN='' BOLD='' NC=''
 fi
 
-log_ok()   { printf "${GREEN}[OK]${NC}     %s\n" "$*"; }
 log_warn() { printf "${AMBER}[WARN]${NC}   %s\n" "$*"; }
+log_ok()   { printf "${GREEN}[OK]${NC}     %s\n" "$*"; }
 log_err()  { printf "${RED}[ERROR]${NC}  %s\n" "$*"; }
 log_info() { printf "${CYAN}[*]${NC}      %s\n" "$*"; }
 log_skip() { printf "${AMBER}[SKIP]${NC}   %s\n" "$*"; }
@@ -38,11 +38,11 @@ echo -e "${BOLD}${CYAN}═══════════════════
 echo
 
 #  Detect distro & package manager
+DISTRO=""
+DISTRO_FAMILY=""
 PM=""
 PM_INSTALL=""
 PM_UPDATE=""
-DISTRO=""
-DISTRO_FAMILY=""
 
 source "$PROJECT_ROOT/lib/setup_wireshark_permissions.sh"
 setup_wireshark_permissions
