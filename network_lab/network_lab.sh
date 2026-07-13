@@ -9,8 +9,8 @@
 _NETWORK_LAB_LOADED=1
 
 # PATH RESOLUTION
-NETWORK_LAB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${PROJECT_ROOT:-$(dirname "$NETWORK_LAB_DIR")}"
+NETWORK_LAB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 shopt -s nullglob
 chmod +x "$NETWORK_LAB_DIR"/*.sh "$NETWORK_LAB_DIR"/*/*.sh
@@ -57,10 +57,8 @@ _network_lab_launch() {
     printf "${BORDER}|${NC}  ${ACCENT}[>] %-$((W-7))s${NC}  ${BORDER}|${NC}\n" "$label"
     echo -e "${BORDER}${border}${NC}"
     echo
-
     log_info "Log: ${log_file}"
     echo
-
     {
         echo "=== ${label} started at $(date) ==="
         "$full_path"
@@ -127,7 +125,6 @@ run_all_network_lab_modules() {
     echo
     echo -e "  ${ACCENT}[>] Running ALL Network Lab modules sequentially"
     echo -e "  ${WARNING}[~] This will execute every networking lab topic."
-    echo
     echo -e "  ${PROMPT}Starting in 3 seconds... Press Ctrl+C to cancel.${NC}"
     sleep 3
     _network_lab_launch "Network Tools"         "network_lab/networking/network_tools.sh"
