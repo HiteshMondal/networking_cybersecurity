@@ -1,6 +1,6 @@
 <div align="center">
 
-# Networking & Cybersecurity Automation Toolkit
+# Linux System Administration & Networking Automation Toolkit
 
 **A modular Bash-based suite for network diagnostics, security hardening, forensic collection, threat detection, and real-time monitoring — with a live web dashboard.**
 
