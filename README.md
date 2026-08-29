@@ -277,29 +277,30 @@ The toolkit's scripts wrap standard Linux CLI tools rather than reinventing them
 
 | Category | Commands |
 |---|---|
-| **Interface & Link Configuration** | `ip` (addr/link/route/neigh/-s link/-6 route), `ifconfig`, `ethtool`, `iw`, `iwconfig`, `nmcli`, `arp` |
+| **Interface & Link Configuration** | `ip` (addr/link/route/neigh/-s link/-6 route), `ifconfig`, `ethtool`, `iw`, `iwconfig`, `nmcli`, `arp`, `rfkill` |
 | **DNS** | `dig`, `nslookup`, `host`, `whois`, `resolvectl` |
 | **Connectivity / Path Diagnostics** | `ping`, `traceroute`, `tracepath`, `mtr` |
-| **Socket / Connection State** | `ss`, `netstat`, `lsof`, `conntrack` |
-| **Packet Capture & Analysis** | `tcpdump`, `tshark`, `wireshark`, `capinfos`, `editcap`, `mergecap` |
-| **Port / Service Scanning** | `nmap`, `masscan` |
+| **Socket / Connection State** | `ss`, `netstat`, `lsof`, `conntrack`, `nc`/`netcat` |
+| **Packet Capture & Analysis** | `tcpdump`, `tshark`, `wireshark`, `capinfos`, `editcap`, `mergecap`, `hexdump`, `xxd` |
+| **Port / Service Scanning** | `nmap`, `masscan`, `hping3` |
 | **Web Recon & Vulnerability Scanning** | `whatweb`, `httprobe`, `gowitness`, `nikto`, `gobuster`, `curl`, `wget` |
 | **TLS/SSL** | `openssl` (s_client, x509, dgst, enc, req, rsa, ec, ecparam, genrsa, rsautl/pkeyutl), `sslscan`, `sslyze` |
-| **Firewall / Packet Filtering** | `iptables`, `ip6tables`, `nft`, `ufw`, `firewall-cmd` |
-| **NAT / Routing** | `iptables -t nat`, `ip route`, IP forwarding via `sysctl net.ipv4.ip_forward` |
+| **Firewall / Packet Filtering** | `iptables`, `ip6tables`, `nft`, `ufw`, `firewall-cmd`, `ipset` |
+| **NAT / Routing / Kernel Params** | `iptables -t nat`, `ip route`, `sysctl` (e.g. `net.ipv4.ip_forward`) |
 | **SSH** | `ssh`, `sshd`, `ssh-keygen`, `scp`, `sftp`, `fail2ban-client`, `sshguard` |
 | **SMB / NFS / RPC** | `smbclient`, `showmount`, `enum4linux`, `rpcinfo` |
 | **VPN** | `wg` (WireGuard), `openvpn` |
 | **Kubernetes** | `kubectl`, `kube-hunter` |
 | **Malware Analysis / Reverse Engineering** | `yara`, `ghidraRun`/`analyzeHeadless`, `strings`, `objdump`, `readelf`, `ssdeep`, `ldd`, `file`, `chkrootkit`, `rkhunter` |
-| **Credential Attacks / Password Auditing** | `hashcat`, `john`, `hydra`, `medusa`, `ncrack`, `crackmapexec`, `bloodhound`, `ldapdomaindump`, `kerbrute` |
-| **Process / Kernel Forensics** | `strace`, `ltrace`, `gdb`, `ptrace_scope` (sysctl), `lsmod`, `modinfo`, `busctl`, `dbus-send` |
+| **Process / Kernel Forensics** | `lsmod`, `modinfo`, `busctl`, `dbus-send`, `ptrace_scope` (via `sysctl`/`/proc`) |
 | **Auditing / Logging** | `journalctl`, `auditctl`, `ausearch`, `dmesg`, `last`, `lastb`, `lastlog`, `w`, `who` |
-| **IDS/IPS & SIEM Config** | `snort` (config only), Security Onion (`so-status`, `so-restart`, `so-hunt`, `so-alert-log`) |
+| **IDS/IPS & SIEM** | `snort`, `suricata`, `zeek`/`bro`, Security Onion (`so-status`, `so-restart`, `so-hunt`, `so-alert-log`) |
 | **Static Analysis** | `semgrep` |
 | **Web App Security** | `burpsuite` |
 | **Threat Intel (via API/curl)** | MISP, OpenCTI, TheHive, IRIS — all accessed via `curl` + API tokens, no dedicated CLI tool |
-| **Detection Targets** (searched for on disk/in-process, not executed) | `iodine`, `dns2tcp`, `dnscat`, `nstx`, `dnstt`, `ptunnel`, `icmptunnel`, `icmpsh`, `mimikatz`, `pypykatz`, `lazagne`, Metasploit, Cobalt Strike, Sliver, `mitmproxy`, `sqlmap`, `hydra`, `nuclei` |
+| **Detection Targets** (searched for on disk/in-process or referenced in documentation, not executed by the toolkit) | `iodine`, `dns2tcp`, `dnscat`, `nstx`, `dnstt`, `ptunnel`, `ptunnel-ng`, `icmptunnel`, `icmpsh`, `mimikatz`, `pypykatz`, `lazagne`, `impacket-secretsdump`, `hashcat`, `john`, `hydra`, `medusa`, `ncrack`, `crackmapexec`, `bloodhound`, `ldapdomaindump`, `kerbrute`, Metasploit/`msfconsole`/meterpreter, Empire, Cobalt Strike, Sliver, Nighthawk, Havoc, Merlin, Covenant, Mythic, `pwncat`, `mitmproxy`, `charles`, `fiddler`, `sslstrip`, `sqlmap`, `nuclei`, `chisel`, `ligolo`/`ligolo-ng`, `frp`/`frpc`/`frps`, `proxychains`, `3proxy`, `tor`, `i2p`/`i2pd`, `hcxdumptool`, `hcxtools`, `aircrack-ng` suite (`airmon-ng`, `airodump-ng`, `aireplay-ng`), `reaver`, `bully`, `pixiewps`, `wpscan`, `kismet`, `bettercap`, `pkexec`, `doas` |
+
+> **Note:** On Debian/Ubuntu, tools installed to `/usr/sbin` or `/sbin` (e.g. `ifconfig`, `ethtool`, `iw`, `iwconfig`, `arp`, `rfkill`) aren't on a regular user's `PATH` by default, even after `install.sh` installs them. Run the toolkit with `sudo`, or add `export PATH="$PATH:/usr/sbin:/sbin"` to your shell profile.
 
 ---
 

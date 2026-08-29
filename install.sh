@@ -32,9 +32,9 @@ fi
 
 #  Banner
 echo
-echo -e "${BOLD}${CYAN}══════════════════════════════════════════════════${NC}"
-echo -e "${BOLD}${CYAN}  Networking & Cybersecurity Toolkit — Installer  ${NC}"
-echo -e "${BOLD}${CYAN}══════════════════════════════════════════════════${NC}"
+echo -e "${BOLD}${CYAN}═════════════════════════════════════════════=═══════════${NC}"
+echo -e "${BOLD}${CYAN}  Linux Security & Network Analysis Toolkit — Installer  ${NC}"
+echo -e "${BOLD}${CYAN}═════════════════════════════════════════════════════════${NC}"
 echo
 
 #  Detect distro & package manager
@@ -138,6 +138,83 @@ declare -a PKG_MAP=(
     "faillog|util-linux|util-linux|util-linux|util-linux|util-linux|util-linux"
     "auditctl|audit|audit|audit|audit|audit|audit"
     "ausearch|audit|audit|audit|audit|audit|audit"
+
+    # Core networking / interface tools
+    "ip|iproute2|iproute|iproute2|iproute2|iproute2|iproute2"
+    "ifconfig|net-tools|net-tools|net-tools|net-tools|net-tools|net-tools"
+    "ethtool|ethtool|ethtool|ethtool|ethtool|ethtool|ethtool"
+    "iw|iw|iw|iw|iw|iw|iw"
+    "iwconfig|wireless-tools|wireless-tools|wireless_tools|wireless-tools|wireless-tools|wireless_tools"
+    "nmcli|network-manager|NetworkManager|networkmanager|NetworkManager|networkmanager|NetworkManager"
+    "arp|net-tools|net-tools|net-tools|net-tools|net-tools|net-tools"
+    "rfkill|rfkill|rfkill|rfkill|rfkill|rfkill|rfkill"
+
+    # Path diagnostics
+    "ping|iputils-ping|iputils|iputils|iputils|iputils-ping|iputils"
+    "mtr|mtr|mtr|mtr|mtr|mtr|mtr"
+
+    # Socket / connection state
+    "lsof|lsof|lsof|lsof|lsof|lsof|lsof"
+    "conntrack|conntrack|conntrack-tools|conntrack-tools|conntrack-tools|conntrack-tools|conntrack-tools"
+    "nc|netcat-openbsd|nmap-ncat|openbsd-netcat|netcat-openbsd|netcat-openbsd|netcat-openbsd"
+
+    # Packet capture extras
+    "hexdump|bsdmainutils|util-linux|util-linux|util-linux|util-linux|util-linux"
+    "xxd|xxd|vim-common|vim|vim|xxd|vim"
+    "hping3|hping3|hping3|hping3|||"
+
+    # Firewall / NAT
+    "iptables|iptables|iptables|iptables|iptables|iptables|iptables"
+    "nft|nftables|nftables|nftables|nftables|nftables|nftables"
+    "ufw|ufw|||||"
+    "firewall-cmd|firewalld|firewalld|firewalld|firewalld||firewalld"
+    "ipset|ipset|ipset|ipset|ipset|ipset|ipset"
+    "sysctl|procps|procps-ng|procps-ng|procps|procps-ng|procps-ng"
+
+    # SSH & brute-force protection
+    "ssh|openssh-client|openssh-clients|openssh|openssh|openssh|openssh"
+    "sshd|openssh-server|openssh-server|openssh|openssh|openssh|openssh"
+    "fail2ban-client|fail2ban|fail2ban|fail2ban|fail2ban|fail2ban|fail2ban"
+    "sshguard|sshguard|sshguard|sshguard|sshguard||sshguard"
+
+    # SMB / NFS / RPC
+    "smbclient|smbclient|samba-client|smbclient|samba-client|samba-client|samba"
+    "showmount|nfs-common|nfs-utils|nfs-utils|nfs-client|nfs-utils|nfs-utils"
+    "enum4linux|enum4linux|enum4linux|enum4linux|||"
+    "rpcinfo|rpcbind|rpcbind|rpcbind|rpcbind|rpcbind|rpcbind"
+
+    # VPN
+    "wg|wireguard-tools|wireguard-tools|wireguard-tools|wireguard-tools|wireguard-tools|wireguard-tools"
+    "openvpn|openvpn|openvpn|openvpn|openvpn|openvpn|openvpn"
+
+    # Kubernetes
+    "kubectl|kubectl||kubectl|kubectl||"
+
+    # Malware analysis / forensics
+    "yara|yara|yara|yara|yara|yara|yara"
+    "objdump|binutils|binutils|binutils|binutils|binutils|binutils"
+    "ssdeep|ssdeep|ssdeep|ssdeep|ssdeep|ssdeep|ssdeep"
+    "ldd|libc-bin|glibc|glibc|glibc|libc-utils|glibc"
+    "file|file|file|file|file|file|file"
+    "chkrootkit|chkrootkit|chkrootkit|chkrootkit|||"
+    "rkhunter|rkhunter|rkhunter|rkhunter|rkhunter||"
+
+    # Kernel / process forensics
+    "lsmod|kmod|kmod|kmod|kmod|kmod|kmod"
+    "busctl|systemd|systemd|systemd|systemd|systemd|systemd"
+
+    # Logging / auditing
+    "journalctl|systemd|systemd|systemd|systemd|systemd|systemd"
+    "last|util-linux|util-linux|util-linux|util-linux|util-linux|util-linux"
+
+    # IDS/IPS (beyond snort)
+    "suricata|suricata|suricata|suricata|suricata|suricata|suricata"
+    "zeek|zeek||zeek|||"
+
+    # Wireless security auditing
+    "aircrack-ng|aircrack-ng|aircrack-ng|aircrack-ng|aircrack-ng|aircrack-ng|aircrack-ng"
+    "reaver|reaver|reaver|reaver|||"
+    "kismet|kismet|kismet|kismet|||"
 )
 
 #  Resolve package name for current PM
@@ -280,9 +357,12 @@ verify_tools() {
         dig nslookup host
         nmap traceroute whois
         tcpdump ss awk python3
+        ip ping lsof sysctl
     )
     local optional_tools=(
         masscan nikto gobuster whatweb sslscan netstat wireshark tshark snort semgrep java ghidra kube-hunter
+        iptables nft ufw fail2ban-client wg openvpn kubectl yara objdump chkrootkit rkhunter \
+        mtr lsof smbclient rpcinfo suricata zeek aircrack-ng hping3 nc
     )
 
     local ok=0 missing=0 optional_missing=0
