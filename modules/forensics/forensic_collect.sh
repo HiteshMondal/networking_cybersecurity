@@ -116,8 +116,23 @@ done
 log_section "Authentication and Login Records"
 echo "[*] Collecting authentication records..."
 
-lastlog > "$OUTPUT_DIR/lastlog.txt"    2>"$ERR_DIR/lastlog.err"    || _note_err "lastlog" $?
-faillog -v > "$OUTPUT_DIR/faillog.txt" 2>"$ERR_DIR/faillog.err"    || _note_err "faillog" $?
+if cmd_exists lastlog; then
+    lastlog > "$OUTPUT_DIR/lastlog.txt" \
+        2> "$ERR_DIR/lastlog.err" \
+        || _note_err "lastlog" $?
+else
+    log_warning "lastlog unavailable; using fallback"
+    echo "lastlog unavailable" > "$OUTPUT_DIR/lastlog.txt"
+fi
+
+if cmd_exists faillog; then
+    faillog -v > "$OUTPUT_DIR/faillog.txt" \
+        2> "$ERR_DIR/faillog.err" \
+        || _note_err "faillog" $?
+else
+    log_warning "faillog unavailable; using fallback"
+    echo "faillog unavailable" > "$OUTPUT_DIR/faillog.txt"
+fi
 
 _section_err "lastlog" "$ERR_DIR/lastlog.err"
 _section_err "faillog" "$ERR_DIR/faillog.err"
@@ -127,15 +142,34 @@ _section_err "faillog" "$ERR_DIR/faillog.err"
 log_section "Audit Framework"
 echo "[*] Collecting audit framework data..."
 
-ausearch --start today > "$OUTPUT_DIR/ausearch_today.log"     2>"$ERR_DIR/ausearch.err" \
-    || ausearch        > "$OUTPUT_DIR/ausearch_all.log"        2>>"$ERR_DIR/ausearch.err" \
-    || _note_err "ausearch" $?
-auditctl -l            > "$OUTPUT_DIR/audit_rules.txt"         2>"$ERR_DIR/auditctl.err" \
-    || _note_err "auditctl" $?
-ausearch -m USER_LOGIN -ts today \
-                       > "$OUTPUT_DIR/ausearch_user_login.txt" 2>"$ERR_DIR/ausearch_login.err" \
-    || _note_err "ausearch user_login" $?
-cp /var/log/audit/audit.log "$OUTPUT_DIR/" 2>/dev/null || true
+if cmd_exists auditctl; then
+    auditctl -l > "$OUTPUT_DIR/audit_rules.txt" \
+        2> "$ERR_DIR/auditctl.err" \
+        || _note_err "auditctl" $?
+else
+    log_warning "auditctl unavailable; audit rules cannot be collected"
+    echo "auditctl unavailable" > "$OUTPUT_DIR/audit_rules.txt"
+fi
+
+if cmd_exists ausearch; then
+    ausearch --start today \
+        > "$OUTPUT_DIR/ausearch_today.log" \
+        2> "$ERR_DIR/ausearch.err" \
+        || _note_err "ausearch" $?
+
+    ausearch -m USER_LOGIN -ts today \
+        > "$OUTPUT_DIR/ausearch_user_login.txt" \
+        2> "$ERR_DIR/ausearch_login.err" \
+        || _note_err "ausearch USER_LOGIN" $?
+else
+    log_warning "ausearch unavailable; audit event search skipped"
+
+    echo "ausearch unavailable" \
+        > "$OUTPUT_DIR/ausearch_today.log"
+
+    echo "ausearch unavailable" \
+        > "$OUTPUT_DIR/ausearch_user_login.txt"
+fi
 
 for f in "$ERR_DIR/ausearch.err" "$ERR_DIR/auditctl.err" "$ERR_DIR/ausearch_login.err"; do
     [ -s "$f" ] \

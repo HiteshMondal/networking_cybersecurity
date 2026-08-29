@@ -134,6 +134,10 @@ declare -a PKG_MAP=(
     "strings|binutils|binutils|binutils|binutils|binutils|binutils"
     "readelf|binutils|binutils|binutils|binutils|binutils|binutils"
     "java|default-jdk|java-17-openjdk|jdk17-openjdk|java-17-openjdk|openjdk17|openjdk"
+    "lastlog|util-linux|util-linux|util-linux|util-linux|util-linux|util-linux"
+    "faillog|util-linux|util-linux|util-linux|util-linux|util-linux|util-linux"
+    "auditctl|audit|audit|audit|audit|audit|audit"
+    "ausearch|audit|audit|audit|audit|audit|audit"
 )
 
 #  Resolve package name for current PM
