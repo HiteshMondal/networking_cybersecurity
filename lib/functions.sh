@@ -1,8 +1,9 @@
 #!/bin/bash
 # /lib/functions.sh
-# Shared utility functions for the Networking & Cybersecurity Toolkit
+# Shared utility functions for the Linux Security & Network Analysis Toolkit
 # Used ASCII as it is compatible for all types of terminals
 # Double-source guard (NOT exported — prevents child process re-source issues)
+
 [[ -n "${_FUNCTIONS_LOADED:-}" ]] && return 0
 _FUNCTIONS_LOADED=1
 
@@ -53,7 +54,7 @@ show_banner() {
     local rule
     rule="${BORDER}┃${NC}${CORNFLOWER}  $(printf '─%.0s' $(seq 1 $(( inner - 4 )))  )  ${NC}${BORDER}┃${NC}"
 
-    local title_text="  Networking & Cybersecurity Automation Toolkit"
+    local title_text="  Linux Security & Network Analysis Toolkit"
     local sub_text="  Professional Security & Network Analysis Suite"
 
     local title_line sub_line
