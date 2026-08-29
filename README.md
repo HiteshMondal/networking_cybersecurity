@@ -275,9 +275,6 @@ networking_cybersecurity/
 
 The toolkit's scripts wrap standard Linux CLI tools rather than reinventing them. Helper utilities like `grep`, `awk`, `sed`, `find`, `cat` are omitted below for brevity:
 
-<details>
-<summary><strong>Click to expand full command reference</strong></summary>
-
 | Category | Commands |
 |---|---|
 | **Interface & Link Configuration** | `ip` (addr/link/route/neigh/-s link/-6 route), `ifconfig`, `ethtool`, `iw`, `iwconfig`, `nmcli`, `arp` |
@@ -303,8 +300,6 @@ The toolkit's scripts wrap standard Linux CLI tools rather than reinventing them
 | **Web App Security** | `burpsuite` |
 | **Threat Intel (via API/curl)** | MISP, OpenCTI, TheHive, IRIS — all accessed via `curl` + API tokens, no dedicated CLI tool |
 | **Detection Targets** (searched for on disk/in-process, not executed) | `iodine`, `dns2tcp`, `dnscat`, `nstx`, `dnstt`, `ptunnel`, `icmptunnel`, `icmpsh`, `mimikatz`, `pypykatz`, `lazagne`, Metasploit, Cobalt Strike, Sliver, `mitmproxy`, `sqlmap`, `hydra`, `nuclei` |
-
-</details>
 
 ---
 
