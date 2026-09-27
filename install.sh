@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ./install.sh
-# Networking & Cybersecurity Toolkit — Dependency Installer
+# System Security & Network Analysis Toolkit — Dependency Installer
 # Supports: Debian/Ubuntu, Arch/Manjaro, RHEL/Fedora/CentOS, openSUSE, Alpine, Void
 
 set -euo pipefail

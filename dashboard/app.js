@@ -962,7 +962,7 @@ function openShareModal(item) {
 }
 
 function buildShareText(item) {
-    const lines = ['📊 Linux Security & Network Analysis Toolkit — Execution Report', ''];
+    const lines = ['📊 System Security & Network Analysis Toolkit — Execution Report', ''];
     if (item?.name)      lines.push(`Script/Tool: ${item.name}`);
     if (item?.category)  lines.push(`Category:    ${item.category}`);
     if (item?.status)    lines.push(`Status:      ${item.status.toUpperCase()}`);

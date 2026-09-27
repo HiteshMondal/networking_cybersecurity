@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 CyberDeck Dashboard Server v4.0
-Linux Security & Network Analysis Toolkit
+System Security & Network Analysis Toolkit
 """
 import http.server
 import json

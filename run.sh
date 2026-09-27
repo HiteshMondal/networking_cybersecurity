@@ -2,7 +2,7 @@
 
 set -Eeuo pipefail
 
-# Linux Security & Network Analysis Toolkit
+# System Security & Network Analysis Toolkit
 # Designed to be compatible with major Linux distributions and WSL.
 # Main control script
 # /run.sh

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # tools/run_tool.sh
-# Networking & Cybersecurity Toolkit — Tools Hub
+# System Security & Network Analysis Toolkit — Tools Hub
 # Provides a unified menu for all advanced security tools
 
 set -Eeuo pipefail

@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🛡️ Linux Security & Network Analysis Toolkit
+# 🛡️ System Security & Network Analysis Toolkit
 
 **A modular Bash-based suite for network diagnostics, security hardening, forensic collection, threat detection, and real-time monitoring — with a live web dashboard.**
 
@@ -39,11 +39,11 @@
 
 ## 🔎 Overview
 
-The **Linux Security & Network Analysis Toolkit** is a collection of Bash scripts and tools designed to automate common network analysis, security auditing, threat detection, forensic, and offensive/defensive tooling tasks on Linux systems. Every execution is logged with timestamps, and results are surfaced through an interactive web dashboard with live tailing, full-text search, and real-time system resource monitoring.
+The **System Security & Network Analysis Toolkit** is a collection of Bash scripts and tools designed to automate common network analysis, security auditing, threat detection, forensic, and offensive/defensive tooling tasks on Linux systems. Every execution is logged with timestamps, and results are surfaced through an interactive web dashboard with live tailing, full-text search, and real-time system resource monitoring.
 
 ```
 ╔══════════════════════════════════════════════════════════════════════════════╗
-║                 🛡️ LINUX SECURITY & NETWORK ANALYSIS TOOLKIT                 ║
+║                 🛡️ SYSTEM SECURITY & NETWORK ANALYSIS TOOLKIT                 ║
 ║                                                                              ║
 ╚══════════════════════════════════════╦═══════════════════════════════════════╝
                                        │
@@ -115,10 +115,8 @@ The **Linux Security & Network Analysis Toolkit** is a collection of Bash script
 ## 🗂️ Project Structure
 
 ```
-networking_cybersecurity/
 ├── 🚀 run.sh                              # Main entry point
 ├── 📦 install.sh                          # Dependency installer (multi-distro)
-├── 📖 README.md
 |
 ├── ⚙️ config/
 │   └── settings.conf                   # Global configuration
